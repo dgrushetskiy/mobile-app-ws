@@ -1,18 +1,18 @@
 package ru.gothmog.blog.app.ws.ui.controller;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import ru.gothmog.blog.app.ws.exceptions.UserServiceException;
+import ru.gothmog.blog.app.ws.service.AddressService;
 import ru.gothmog.blog.app.ws.service.UserService;
+import ru.gothmog.blog.app.ws.shared.dto.AddressDto;
 import ru.gothmog.blog.app.ws.shared.dto.UserDto;
 import ru.gothmog.blog.app.ws.ui.model.request.UserDetailsRequestModel;
-import ru.gothmog.blog.app.ws.ui.model.response.ErrorMessages;
-import ru.gothmog.blog.app.ws.ui.model.response.OperationStatusModel;
-import ru.gothmog.blog.app.ws.ui.model.response.RequestOperationStatus;
-import ru.gothmog.blog.app.ws.ui.model.response.UserRest;
+import ru.gothmog.blog.app.ws.ui.model.response.*;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,15 +22,18 @@ public class UserController {
 
     private UserService userService;
 
-    public UserController(UserService userService) {
+    private AddressService addressService;
+
+    public UserController(UserService userService, AddressService addressService) {
         this.userService = userService;
+        this.addressService = addressService;
     }
 
     @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserRest getUser(@PathVariable String id){
-        UserRest returnValue = new UserRest();
         UserDto userDto = userService.getUserByUserId(id);
-        BeanUtils.copyProperties(userDto,returnValue);
+        ModelMapper modelMapper = new ModelMapper();
+        UserRest returnValue = modelMapper.map(userDto,UserRest.class);
         return returnValue;
     }
 
@@ -94,6 +97,16 @@ public class UserController {
             BeanUtils.copyProperties(userDto,userModel);
             returnValue.add(userModel);
         });
+        return returnValue;
+    }
+    @GetMapping(path = "/{id}/addresses", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public List<AddressRest> getUserAddresses(@PathVariable String id){
+        List<AddressRest> returnValue = new ArrayList<>();
+        List<AddressDto> addressesDto = addressService.getAddresses(id);
+        if (addressesDto !=null && !addressesDto.isEmpty()){
+            Type listType = new TypeToken<List<AddressRest>>() {}.getType();
+            returnValue = new ModelMapper().map(addressesDto,listType);
+        }
         return returnValue;
     }
 }
