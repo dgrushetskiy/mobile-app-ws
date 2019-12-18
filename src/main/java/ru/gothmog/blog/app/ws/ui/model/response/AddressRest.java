@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.hateoas.RepresentationModel;
 
+
 @Getter
 @Setter
 public class AddressRest extends RepresentationModel {

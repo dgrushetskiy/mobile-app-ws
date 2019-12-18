@@ -3,6 +3,7 @@ package ru.gothmog.blog.app.ws.ui.controller;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
+import org.springframework.hateoas.Link;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.gothmog.blog.app.ws.service.AddressService;
@@ -15,6 +16,8 @@ import ru.gothmog.blog.app.ws.ui.model.response.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
 @RequestMapping("users")//http://localhost:8080/users
@@ -113,6 +116,21 @@ public class UserController {
     public AddressRest getUserAddress(@PathVariable String userId,@PathVariable String addressId){
         AddressDto addressDto = addressService.getAddress(addressId);
 
-        return new ModelMapper().map(addressDto,AddressRest.class);
+        Link addressLink = linkTo(UserController.class)
+                .slash(userId)
+                .slash("addresses")
+                .slash(addressId)
+                .withSelfRel();
+
+        Link userLink = linkTo(UserController.class).slash(userId).withRel("user");
+        Link addressesLink = linkTo(UserController.class).slash(userId).slash("addresses").withRel("addresses");
+
+        AddressRest addressRestModel = new ModelMapper().map(addressDto,AddressRest.class);
+
+        addressRestModel.add(addressLink);
+        addressRestModel.add(userLink);
+        addressRestModel.add(addressesLink);
+
+        return addressRestModel;
     }
 }
